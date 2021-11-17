@@ -65,6 +65,8 @@ export class ChatApp extends LitElement {
 
   render() {
     return html`
+      <link rel="stylesheet" href="./dist/tailwind.css" />
+
       <sl-card class="app">
         <div slot="header">TODO</div>
         TODO
