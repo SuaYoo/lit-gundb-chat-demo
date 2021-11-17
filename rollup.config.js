@@ -4,6 +4,7 @@ import html from '@web/rollup-plugin-html';
 import { importMetaAssets } from '@web/rollup-plugin-import-meta-assets';
 import { terser } from 'rollup-plugin-terser';
 import { generateSW } from 'rollup-plugin-workbox';
+import copy from 'rollup-plugin-copy';
 import path from 'path';
 
 export default {
@@ -23,6 +24,18 @@ export default {
       minify: true,
       injectServiceWorker: true,
       serviceWorkerPath: 'dist/sw.js',
+    }),
+    // Copy Shoelace assets to dist/shoelace
+    copy({
+      targets: [
+        {
+          src: path.resolve(
+            __dirname,
+            'node_modules/@shoelace-style/shoelace/dist/assets'
+          ),
+          dest: path.resolve(__dirname, 'dist/shoelace'),
+        },
+      ],
     }),
     /** Resolve bare module imports */
     nodeResolve(),
