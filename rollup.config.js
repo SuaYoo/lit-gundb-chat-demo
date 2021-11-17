@@ -5,7 +5,10 @@ import { importMetaAssets } from '@web/rollup-plugin-import-meta-assets';
 import { terser } from 'rollup-plugin-terser';
 import { generateSW } from 'rollup-plugin-workbox';
 import copy from 'rollup-plugin-copy';
+import replace from '@rollup/plugin-replace';
 import path from 'path';
+
+const shoelaceAssetDest = 'dist/shoelace';
 
 export default {
   input: 'index.html',
@@ -33,9 +36,15 @@ export default {
             __dirname,
             'node_modules/@shoelace-style/shoelace/dist/assets'
           ),
-          dest: path.resolve(__dirname, 'dist/shoelace'),
+          dest: path.resolve(__dirname, shoelaceAssetDest),
         },
       ],
+    }),
+    // Expose environment variables
+    // TODO sync rollup.config with web-dev-server.config
+    replace({
+      'process.env.NODE_ENV': JSON.stringify('production'),
+      'process.env.SHOELACE_ASSET_DEST': JSON.stringify(shoelaceAssetDest),
     }),
     /** Resolve bare module imports */
     nodeResolve(),
