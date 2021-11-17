@@ -15,15 +15,24 @@
       body {
         margin: 0;
         padding: 0;
-        font-family: sans-serif;
-        background-color: #ededed;
+        overflow: hidden;
+      }
+
+      body {
+        font-family: var(--sl-font-sans);
+        background-color: rgb(var(--sl-color-neutral-300));
+        color: rgb(var(--sl-color-neutral-900));
+      }
+
+      * {
+        box-sizing: border-box;
       }
     </style>
     <title>chat-app</title>
   </head>
 
   <body>
-    <chat-app></chat-app>
+    <lgc-app></lgc-app>
 
     <script type="module" src="./out-tsc/src/chat-app.js"></script>
   </body>

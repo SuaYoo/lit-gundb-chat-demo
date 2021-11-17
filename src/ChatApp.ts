@@ -1,80 +1,81 @@
+/* eslint-disable max-classes-per-file */
 import { LitElement, html, css } from 'lit';
-import { property } from 'lit/decorators.js';
+import { customElement, property } from 'lit/decorators.js';
 
-const logo = new URL('../../assets/open-wc-logo.svg', import.meta.url).href;
+// const logo = new URL('../../assets/open-wc-logo.svg', import.meta.url).href;
+
+/**
+ * @slot - Box content
+ * @cssproperty --padding
+ * @cssproperty --margin
+ */
+@customElement('lgc-box')
+class Box extends LitElement {
+  static styles = [
+    css`
+      :host {
+        /* --padding: var(--sl-spacing-large); */
+        --padding: 0;
+        --margin: 0;
+        position: relative;
+      }
+
+      .box {
+        padding: var(--padding);
+        margin: var(--margin);
+      }
+    `,
+  ];
+
+  render() {
+    return html`<div class="box"><slot></slot></div>`;
+  }
+}
 
 export class ChatApp extends LitElement {
   @property({ type: String }) title = 'My app';
 
   static styles = css`
     :host {
+      min-width: 100vw;
       min-height: 100vh;
       display: flex;
-      flex-direction: column;
       align-items: center;
-      justify-content: flex-start;
-      font-size: calc(10px + 2vmin);
-      color: #1a2b42;
-      max-width: 960px;
-      margin: 0 auto;
-      text-align: center;
-      background-color: var(--chat-app-background-color);
+      justify-content: center;
     }
 
-    main {
-      flex-grow: 1;
+    .app {
+      --border-radius: var(--sl-border-radius-large);
+      --padding: var(--sl-spacing-small);
     }
 
-    .logo {
-      margin-top: 36px;
-      animation: app-logo-spin infinite 20s linear;
+    .app::part(base) {
+      display: flex;
+      width: 580px;
+      height: 1100px;
+      max-width: 100vw;
+      max-height: 100vh;
     }
 
-    @keyframes app-logo-spin {
-      from {
-        transform: rotate(0deg);
-      }
-      to {
-        transform: rotate(360deg);
-      }
-    }
-
-    .app-footer {
-      font-size: calc(12px + 0.5vmin);
-      align-items: center;
-    }
-
-    .app-footer a {
-      margin-left: 5px;
+    .app::part(body) {
+      flex: 1 1 auto;
+      overflow: auto;
     }
   `;
 
   render() {
     return html`
-      <main>
-        <div class="logo"><img alt="open-wc logo" src=${logo} /></div>
-        <h1>${this.title}</h1>
-
-        <p>Edit <code>src/ChatApp.ts</code> and save to reload.</p>
-        <a
-          class="app-link"
-          href="https://open-wc.org/guides/developing-components/code-examples"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Code examples
-        </a>
-      </main>
-
-      <p class="app-footer">
-        🚽 Made with love by
-        <a
-          target="_blank"
-          rel="noopener noreferrer"
-          href="https://github.com/open-wc"
-          >open-wc</a
-        >.
-      </p>
+      <sl-card class="app">
+        <div slot="header">TODO</div>
+        TODO
+        <div slot="footer">TODO</div>
+      </sl-card>
     `;
+  }
+}
+
+declare global {
+  interface HTMLElementTagNameMap {
+    'lgc-box': Box;
   }
 }
