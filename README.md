@@ -1,12 +1,20 @@
-# lit-gundb-chat-demo
+# WIP lit-gundb-chat-demo
 
 ## Quickstart
 
-Install dependencies
+Install dependencies:
 
 ```sh
 yarn
 ```
+
+Start the dev server:
+
+```sh
+yarn serve
+```
+
+This will open a new tab in your default to localhost:8000.
 
 ## Scripts
 

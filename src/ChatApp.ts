@@ -2,33 +2,40 @@
 import { LitElement, html, css } from 'lit';
 import { customElement, property } from 'lit/decorators.js';
 
-// const logo = new URL('../../assets/open-wc-logo.svg', import.meta.url).href;
+type Participant = {
+  id: string;
+  username: string;
+};
 
-/**
- * @slot - Box content
- * @cssproperty --padding
- * @cssproperty --margin
- */
-@customElement('lgc-box')
-class Box extends LitElement {
+@customElement('lgc-participants')
+class Participants extends LitElement {
+  @property({ type: Array }) participants: Participant[] = [
+    {
+      id: '1',
+      username: 'User 1',
+    },
+  ];
+
   static styles = [
     css`
       :host {
-        /* --padding: var(--sl-spacing-large); */
-        --padding: 0;
-        --margin: 0;
-        position: relative;
-      }
-
-      .box {
-        padding: var(--padding);
-        margin: var(--margin);
+        background-color: rgb(var(--sl-color-neutral-200));
       }
     `,
   ];
 
   render() {
-    return html`<div class="box"><slot></slot></div>`;
+    return html`
+      <sl-menu>
+        <sl-menu-label>Online (${this.participants.length})</sl-menu-label>
+        ${this.participants.map(
+          user =>
+            html`<sl-menu-item value="${user.id}"
+              >${user.username}</sl-menu-item
+            >`
+        )}
+      </sl-menu>
+    `;
   }
 }
 
@@ -44,22 +51,22 @@ export class ChatApp extends LitElement {
       justify-content: center;
     }
 
-    .app {
+    .room {
       --border-radius: var(--sl-border-radius-large);
-      --padding: var(--sl-spacing-small);
+      --padding: 0;
     }
 
-    .app::part(base) {
+    .room::part(base) {
       display: flex;
-      width: 580px;
-      height: 1100px;
+      width: 1200px;
+      height: 800px;
       max-width: 100vw;
       max-height: 100vh;
     }
 
-    .app::part(body) {
+    .room::part(body) {
+      display: flex;
       flex: 1 1 auto;
-      overflow: auto;
     }
   `;
 
@@ -67,14 +74,17 @@ export class ChatApp extends LitElement {
     return html`
       <link rel="stylesheet" href="./dist/tailwind.css" />
 
-      <sl-card class="app">
-        <div slot="header">TODO</div>
-        TODO
-        <div slot="footer">
-          <sl-input placeholder="Message ${this.roomName}" pill>
-            <sl-icon name="chat" slot="prefix"></sl-icon>
-          </sl-input>
+      <sl-card class="room">
+        <div class="p-3" slot="header">${this.roomName}</div>
+        <div class="flex-auto flex flex-col">
+          <div class="flex-1">TODO</div>
+          <div class="p-3">
+            <sl-input placeholder="Message ${this.roomName}" pill>
+              <sl-icon name="chat" slot="prefix"></sl-icon>
+            </sl-input>
+          </div>
         </div>
+        <lgc-participants class="w-80"></lgc-participants>
       </sl-card>
     `;
   }
@@ -82,6 +92,6 @@ export class ChatApp extends LitElement {
 
 declare global {
   interface HTMLElementTagNameMap {
-    'lgc-box': Box;
+    'lgc-participants': Participants;
   }
 }
