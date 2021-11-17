@@ -33,7 +33,7 @@ class Box extends LitElement {
 }
 
 export class ChatApp extends LitElement {
-  @property({ type: String }) title = 'My app';
+  @property({ type: String }) roomName = '#general';
 
   static styles = css`
     :host {
@@ -68,7 +68,11 @@ export class ChatApp extends LitElement {
       <sl-card class="app">
         <div slot="header">TODO</div>
         TODO
-        <div slot="footer">TODO</div>
+        <div slot="footer">
+          <sl-input placeholder="Message ${this.roomName}" pill>
+            <sl-icon name="chat" slot="prefix"></sl-icon>
+          </sl-input>
+        </div>
       </sl-card>
     `;
   }
