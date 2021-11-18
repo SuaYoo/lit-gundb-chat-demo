@@ -1,5 +1,13 @@
 # WIP lit-gundb-chat-demo
 
+![Chat room with sample conversation between "ghostface" and "freddy"](./docs/screenshot.png)
+
+TODO:
+
+- [ ] Encrypted messages
+- [ ] Multiple rooms
+- [ ] Private messages
+
 ## Quickstart
 
 Install dependencies:
