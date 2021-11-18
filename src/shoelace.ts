@@ -12,6 +12,7 @@ import '@shoelace-style/shoelace/dist/components/input/input.js';
 import '@shoelace-style/shoelace/dist/components/menu/menu.js';
 import '@shoelace-style/shoelace/dist/components/menu-item/menu-item.js';
 import '@shoelace-style/shoelace/dist/components/menu-label/menu-label.js';
+import '@shoelace-style/shoelace/dist/components/relative-time/relative-time.js';
 
 if (process.env.SHOELACE_ASSET_DEST) {
   setBasePath(process.env.SHOELACE_ASSET_DEST);

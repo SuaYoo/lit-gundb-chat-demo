@@ -1,6 +1,53 @@
 /* eslint-disable max-classes-per-file */
 import { LitElement, html, css } from 'lit';
 import { customElement, property } from 'lit/decorators.js';
+import { repeat } from 'lit/directives/repeat.js';
+
+type Message = {
+  id: string;
+  userId: string;
+  username: string;
+  text: string;
+  timestamp: number;
+};
+
+@customElement('lgc-log')
+class Log extends LitElement {
+  @property({ type: Array }) log: Message[] = [
+    {
+      id: '1',
+      userId: '1',
+      username: 'User 1',
+      text: 'hello',
+      timestamp: 1637193705959,
+    },
+  ];
+
+  static styles = [css``];
+
+  render() {
+    return html`
+      <!-- TODO move to shared -->
+      <link rel="stylesheet" href="./dist/tailwind.css" />
+
+      <ul class="list-none">
+        ${repeat(
+          this.log,
+          item => item.id,
+          item => html`<li>
+            <div>
+              <span>${item.username}</span>
+              <sl-relative-time
+                .date="${new Date(item.timestamp)}"
+              ></sl-relative-time>
+              <div>${item.text}</div>
+            </div>
+          </li>`
+        )}
+      </ul>
+    `;
+  }
+}
 
 type Participant = {
   id: string;
@@ -72,12 +119,13 @@ export class ChatApp extends LitElement {
 
   render() {
     return html`
+      <!-- TODO move to shared -->
       <link rel="stylesheet" href="./dist/tailwind.css" />
 
       <sl-card class="room">
         <div class="p-3" slot="header">${this.roomName}</div>
         <div class="flex-auto flex flex-col">
-          <div class="flex-1">TODO</div>
+          <lgc-log class="flex-1"></lgc-log>
           <div class="p-3">
             <sl-input placeholder="Message ${this.roomName}" pill>
               <sl-icon name="chat" slot="prefix"></sl-icon>
@@ -92,6 +140,7 @@ export class ChatApp extends LitElement {
 
 declare global {
   interface HTMLElementTagNameMap {
+    'lgc-log': Log;
     'lgc-participants': Participants;
   }
 }
