@@ -38,13 +38,20 @@ class Log extends LitElement {
           Array.from(this.log),
           item => item.id,
           item => html`<li>
-            <div>
-              <sl-avatar></sl-avatar>
-              <span>${item.username}</span>
-              <sl-relative-time
-                .date="${new Date(item.timestamp)}"
-              ></sl-relative-time>
-              <div>${item.text}</div>
+            <div class="flex pl-4 pr-4 pt-5">
+              <div class="mr-4">
+                <sl-avatar></sl-avatar>
+              </div>
+              <div>
+                <div class="mb-1">
+                  <strong class="mr-1">${item.username}</strong>
+                  <sl-relative-time
+                    class="text-xs text-gray-500"
+                    .date="${new Date(item.timestamp)}"
+                  ></sl-relative-time>
+                </div>
+                <div>${item.text}</div>
+              </div>
             </div>
           </li>`
         )}
@@ -314,8 +321,6 @@ export class ChatApp extends LitElement {
 
     this._db.map().on(
       (msg: any, key: string) => {
-        console.log('got message:', key);
-
         this.logMap = {
           ...this.logMap,
           [key]: {
