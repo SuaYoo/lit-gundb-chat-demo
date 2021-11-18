@@ -22,7 +22,7 @@ Start the dev server:
 yarn serve
 ```
 
-This will open a new tab in your default to localhost:8000.
+This will open localhost:8000 in a new tab in your default browser.
 
 ## Scripts
 
