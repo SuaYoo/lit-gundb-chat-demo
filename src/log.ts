@@ -3,6 +3,7 @@ import { property } from 'lit/decorators.js';
 import { repeat } from 'lit/directives/repeat.js';
 
 import { Message } from './types.js';
+import { tailwind } from './utils.js';
 
 export const elementName = 'lgc-log';
 
@@ -12,10 +13,7 @@ export class Log extends LitElement {
   static styles = [css``];
 
   render() {
-    return html`
-      <!-- TODO move to shared -->
-      <link rel="stylesheet" href="./dist/tailwind.css" />
-
+    return tailwind(html`
       <ul class="list-none">
         ${repeat(
           this.log,
@@ -39,6 +37,6 @@ export class Log extends LitElement {
           </li>`
         )}
       </ul>
-    `;
+    `);
   }
 }

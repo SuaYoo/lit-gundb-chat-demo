@@ -7,6 +7,7 @@ import Gun from 'https://cdn.skypack.dev/gun/gun';
 import 'https://cdn.skypack.dev/gun/sea';
 
 import { Message, Participant, User } from './types.js';
+import { tailwind } from './utils.js';
 
 export class ChatApp extends LitElement {
   @property({ type: String }) roomName = '#general';
@@ -106,12 +107,7 @@ export class ChatApp extends LitElement {
       ? this.renderRoom.bind(this)
       : this.renderLogin.bind(this);
 
-    return html`
-      <!-- TODO move to shared -->
-      <link rel="stylesheet" href="./dist/tailwind.css" />
-
-      ${renderContent()}
-    `;
+    return tailwind(html` ${renderContent()} `);
   }
 
   private login({
