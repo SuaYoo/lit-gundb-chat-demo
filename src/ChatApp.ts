@@ -87,10 +87,10 @@ export class ChatApp extends LitElement {
   user: User | null = null;
 
   @state()
-  logMap: { [key: string]: Message } = {};
+  inputValue: string = '';
 
-  @query('#msg-input')
-  msgInput!: HTMLInputElement;
+  @state()
+  logMap: { [key: string]: Message } = {};
 
   @query('#sign-in-form')
   signInForm!: HTMLFormElement;
@@ -141,15 +141,9 @@ export class ChatApp extends LitElement {
           online: true,
         };
       });
-    }
-  }
 
-  send() {
-    this._db.set({
-      ts: Date.now(),
-      userId: '1',
-      text: this.msgInput.value,
-    });
+      this.initDb();
+    }
   }
 
   render() {
@@ -182,6 +176,8 @@ export class ChatApp extends LitElement {
           username,
           online: true,
         };
+
+        this.initDb();
       }
     });
   }
@@ -222,6 +218,23 @@ export class ChatApp extends LitElement {
   private handleClickLogout() {
     this._gunUser.leave();
     this.user = null;
+  }
+
+  private handleSubmitMessage(e: any) {
+    this._db.set({
+      ts: Date.now(),
+      userId: this.user!.id,
+      username: this.user!.username,
+      text: this.inputValue,
+    });
+
+    this.inputValue = '';
+  }
+
+  private onInput(e: Event) {
+    const input = e.target as HTMLInputElement;
+
+    this.inputValue = input.value;
   }
 
   private renderLogin() {
@@ -266,8 +279,8 @@ export class ChatApp extends LitElement {
 
     return html`
       <sl-card class="room">
-        <div class="p-3 flex content-center justify-between" slot="header">
-          <h1>${this.roomName}</h1>
+        <div class="p-2 flex items-center justify-between" slot="header">
+          <h1 class="p-1">${this.roomName}</h1>
           <div>
             <sl-button @click="${this.handleClickLogout}" size="small"
               >log out</sl-button
@@ -276,16 +289,18 @@ export class ChatApp extends LitElement {
         </div>
         <div class="flex-auto flex flex-col">
           <lgc-log class="flex-1 overflow-auto" .log="${log}"></lgc-log>
-          <div class="p-3">
+
+          <sl-form class="p-3" @sl-submit="${this.handleSubmitMessage}">
             <sl-input
-              id="msg-input"
+              value="${this.inputValue}"
+              @input="${this.onInput}"
               placeholder="Message ${this.roomName}"
+              clearable
               pill
             >
               <sl-icon name="chat" slot="prefix"></sl-icon>
             </sl-input>
-            <button @click=${this.send}>Add</button>
-          </div>
+          </sl-form>
         </div>
         <lgc-participants class="w-80"></lgc-participants>
       </sl-card>
@@ -306,7 +321,7 @@ export class ChatApp extends LitElement {
           [key]: {
             id: key,
             userId: msg.userId,
-            username: msg.userId, // TODO
+            username: msg.username, // TODO look up from users
             text: msg.text,
             timestamp: msg.ts,
           },
