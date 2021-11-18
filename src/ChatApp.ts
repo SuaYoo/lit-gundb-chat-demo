@@ -169,6 +169,22 @@ export class ChatApp extends LitElement {
     }
   }
 
+  disconnectedCallback() {
+    if (this.user) {
+      // TODO before window unload?
+      this._usersDb
+        .get(this.user.id)
+        .get('online')
+        .put(false, () => {
+          this._usersDb.off();
+        });
+    } else {
+      this._usersDb.off();
+    }
+
+    this._logDb.off();
+  }
+
   render() {
     const renderContent = this.user
       ? this.renderRoom.bind(this)
@@ -243,8 +259,15 @@ export class ChatApp extends LitElement {
   }
 
   private handleClickLogout() {
+    const userId = this.user!.id;
+
     this._gunUser.leave();
     this.user = null;
+
+    this._usersDb
+      .get(userId)
+      .get('online')
+      .put(false, () => {});
   }
 
   private handleSubmitMessage(e: any) {
@@ -381,8 +404,6 @@ export class ChatApp extends LitElement {
         change: true,
       }
     );
-    // TODO off
-    // log.off()
   }
 }
 
