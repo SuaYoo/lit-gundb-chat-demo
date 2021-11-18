@@ -1,10 +1,12 @@
 /* eslint-disable max-classes-per-file */
 import { LitElement, html, css } from 'lit';
-import { customElement, property, query } from 'lit/decorators.js';
+import { customElement, property, query, state } from 'lit/decorators.js';
 import { repeat } from 'lit/directives/repeat.js';
 
 // @ts-ignore
-import Gun from 'https://cdn.skypack.dev/gun';
+import Gun from 'https://cdn.skypack.dev/gun/gun';
+// @ts-ignore
+import 'https://cdn.skypack.dev/gun/sea';
 
 type Message = {
   id: string;
@@ -12,6 +14,12 @@ type Message = {
   username: string;
   text: string;
   timestamp: number;
+};
+
+type User = {
+  id: string;
+  username: string;
+  online: boolean;
 };
 
 @customElement('lgc-log')
@@ -45,19 +53,9 @@ class Log extends LitElement {
   }
 }
 
-type Participant = {
-  id: string;
-  username: string;
-};
-
 @customElement('lgc-participants')
 class Participants extends LitElement {
-  @property({ type: Array }) participants: Participant[] = [
-    {
-      id: '1',
-      username: 'User 1',
-    },
-  ];
+  @property({ type: Array }) participants: User[] = [];
 
   static styles = [
     css`
@@ -85,13 +83,23 @@ class Participants extends LitElement {
 export class ChatApp extends LitElement {
   @property({ type: String }) roomName = '#general';
 
-  @property({ attribute: false })
+  @state()
+  user: User | null = null;
+
+  @state()
   logMap: { [key: string]: Message } = {};
 
-  @query('#input')
-  input!: HTMLInputElement;
+  @query('#msg-input')
+  msgInput!: HTMLInputElement;
 
-  _db: Gun;
+  @query('#sign-in-form')
+  signInForm!: HTMLFormElement;
+
+  private _gun: Gun;
+
+  private _gunUser: any;
+
+  private _db: any;
 
   static styles = css`
     :host {
@@ -122,9 +130,172 @@ export class ChatApp extends LitElement {
   `;
 
   firstUpdated() {
-    this._db = Gun(['https://gun-manhattan.herokuapp.com/gun'])
-      .get(process.env.ROOM_ID)
-      .get('log');
+    this._gun = Gun(['https://gun-manhattan.herokuapp.com/gun']);
+    this._gunUser = this._gun.user().recall({ sessionStorage: true });
+
+    if (this._gunUser.is) {
+      this._gunUser.get('alias').once((username: string) => {
+        this.user = {
+          id: this._gunUser.is.pub,
+          username,
+          online: true,
+        };
+      });
+    }
+  }
+
+  send() {
+    this._db.set({
+      ts: Date.now(),
+      userId: '1',
+      text: this.msgInput.value,
+    });
+  }
+
+  render() {
+    const renderContent = this.user
+      ? this.renderRoom.bind(this)
+      : this.renderLogin.bind(this);
+
+    return html`
+      <!-- TODO move to shared -->
+      <link rel="stylesheet" href="./dist/tailwind.css" />
+
+      ${renderContent()}
+    `;
+  }
+
+  private login({
+    username,
+    password,
+  }: {
+    username: string;
+    password: string;
+  }) {
+    this._gunUser.auth(username, password, ({ err, soul }: any) => {
+      if (err) {
+        // TODO show error
+        console.debug(err);
+      } else {
+        this.user = {
+          id: soul.slice(1),
+          username,
+          online: true,
+        };
+      }
+    });
+  }
+
+  private handleSubmitLogin(e: any) {
+    const { formData } = e.detail;
+    const username = formData.get('username');
+    const password = formData.get('password');
+
+    this.login({ username, password });
+  }
+
+  private handleClickCreateAccount() {
+    const formData = this.signInForm.getFormData();
+    const username = formData.get('username');
+    const password = formData.get('password');
+
+    const addUser = (pub: string) => {
+      this._gun.get('users').get(pub).put({
+        username,
+      });
+
+      this.login({ username, password });
+
+      console.log('added new user with pub:', pub);
+    };
+
+    this._gunUser.create(username, password, ({ err, pub }: any) => {
+      if (err) {
+        // TODO show error
+        console.debug(err);
+      } else {
+        addUser(pub);
+      }
+    });
+  }
+
+  private handleClickLogout() {
+    this._gunUser.leave();
+    this.user = null;
+  }
+
+  private renderLogin() {
+    return html`
+      <sl-card>
+        <sl-form id="sign-in-form" @sl-submit="${this.handleSubmitLogin}">
+          <div class="grid gap-4">
+            <sl-input
+              name="username"
+              type="text"
+              label="Username"
+              required
+            ></sl-input>
+            <sl-input
+              name="password"
+              type="password"
+              label="Password"
+              required
+              toggle-password
+            ></sl-input>
+
+            <div class="flex flex-col items-center justify-center">
+              <sl-button type="primary" style="width:100%" submit pill
+                >Log in</sl-button
+              >
+              <span class="p-2">or</span>
+              <sl-button
+                @click="${this.handleClickCreateAccount}"
+                style="width:100%"
+                pill
+                >Create account</sl-button
+              >
+            </div>
+          </div>
+        </sl-form>
+      </sl-card>
+    `;
+  }
+
+  private renderRoom() {
+    const log = Object.values(this.logMap);
+
+    return html`
+      <sl-card class="room">
+        <div class="p-3 flex content-center justify-between" slot="header">
+          <h1>${this.roomName}</h1>
+          <div>
+            <sl-button @click="${this.handleClickLogout}" size="small"
+              >log out</sl-button
+            >
+          </div>
+        </div>
+        <div class="flex-auto flex flex-col">
+          <lgc-log class="flex-1 overflow-auto" .log="${log}"></lgc-log>
+          <div class="p-3">
+            <sl-input
+              id="msg-input"
+              placeholder="Message ${this.roomName}"
+              pill
+            >
+              <sl-icon name="chat" slot="prefix"></sl-icon>
+            </sl-input>
+            <button @click=${this.send}>Add</button>
+          </div>
+        </div>
+        <lgc-participants class="w-80"></lgc-participants>
+      </sl-card>
+    `;
+  }
+
+  private initDb() {
+    window.history.replaceState(null, '', `/room/${process.env.ROOM_ID}`);
+
+    this._db = this._gun.get(process.env.ROOM_ID).get('log');
 
     this._db.map().on(
       (msg: any, key: string) => {
@@ -147,38 +318,6 @@ export class ChatApp extends LitElement {
     );
     // TODO off
     // log.off()
-  }
-
-  send() {
-    this._db.set({
-      ts: Date.now(),
-      userId: '1',
-      text: this.input.value,
-    });
-  }
-
-  render() {
-    const log = Object.values(this.logMap);
-    console.log(this.logMap);
-
-    return html`
-      <!-- TODO move to shared -->
-      <link rel="stylesheet" href="./dist/tailwind.css" />
-
-      <sl-card class="room">
-        <div class="p-3" slot="header">${this.roomName}</div>
-        <div class="flex-auto flex flex-col">
-          <lgc-log class="flex-1 overflow-auto" .log="${log}"></lgc-log>
-          <div class="p-3">
-            <sl-input id="input" placeholder="Message ${this.roomName}" pill>
-              <sl-icon name="chat" slot="prefix"></sl-icon>
-            </sl-input>
-            <button @click=${this.send}>Add</button>
-          </div>
-        </div>
-        <lgc-participants class="w-80"></lgc-participants>
-      </sl-card>
-    `;
   }
 }
 
