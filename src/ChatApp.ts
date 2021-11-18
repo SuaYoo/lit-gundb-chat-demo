@@ -16,9 +16,12 @@ type Message = {
   timestamp: number;
 };
 
-type User = {
+type Participant = {
   id: string;
   username: string;
+};
+
+type User = Participant & {
   online: boolean;
 };
 
@@ -35,7 +38,7 @@ class Log extends LitElement {
 
       <ul class="list-none">
         ${repeat(
-          Array.from(this.log),
+          this.log,
           item => item.id,
           item => html`<li>
             <div class="flex pl-4 pr-4 pt-5">
@@ -62,12 +65,16 @@ class Log extends LitElement {
 
 @customElement('lgc-participants')
 class Participants extends LitElement {
-  @property({ type: Array }) participants: User[] = [];
+  @property({ type: Array }) participants: Participant[] = [];
 
   static styles = [
     css`
       :host {
         background-color: rgb(var(--sl-color-neutral-200));
+      }
+
+      sl-avatar {
+        --size: 2rem;
       }
     `,
   ];
@@ -78,9 +85,10 @@ class Participants extends LitElement {
         <sl-menu-label>Online (${this.participants.length})</sl-menu-label>
         ${this.participants.map(
           user =>
-            html`<sl-menu-item value="${user.id}"
-              >${user.username}</sl-menu-item
-            >`
+            html`<sl-menu-item value="${user.id}">
+              <sl-avatar slot="prefix"></sl-avatar>
+              <span class="ml-1">${user.username}</span>
+            </sl-menu-item>`
         )}
       </sl-menu>
     `;
@@ -99,6 +107,9 @@ export class ChatApp extends LitElement {
   @state()
   logMap: { [key: string]: Message } = {};
 
+  @state()
+  participantsMap: { [key: string]: Participant } = {};
+
   @query('#sign-in-form')
   signInForm!: HTMLFormElement;
 
@@ -106,7 +117,9 @@ export class ChatApp extends LitElement {
 
   private _gunUser: any;
 
-  private _db: any;
+  private _usersDb: any;
+
+  private _logDb: any;
 
   static styles = css`
     :host {
@@ -139,6 +152,7 @@ export class ChatApp extends LitElement {
   firstUpdated() {
     this._gun = Gun(['https://gun-manhattan.herokuapp.com/gun']);
     this._gunUser = this._gun.user().recall({ sessionStorage: true });
+    this._usersDb = this._gun.get('users');
 
     if (this._gunUser.is) {
       this._gunUser.get('alias').once((username: string) => {
@@ -148,6 +162,8 @@ export class ChatApp extends LitElement {
           online: true,
         };
       });
+
+      this._usersDb.get(this._gunUser.is.pub).get('online').put(true);
 
       this.initDb();
     }
@@ -178,11 +194,15 @@ export class ChatApp extends LitElement {
         // TODO show error
         console.debug(err);
       } else {
+        const pub = soul.slice(1);
+
         this.user = {
-          id: soul.slice(1),
+          id: pub,
           username,
           online: true,
         };
+
+        this._usersDb.get(pub).get('online').put(true);
 
         this.initDb();
       }
@@ -228,7 +248,7 @@ export class ChatApp extends LitElement {
   }
 
   private handleSubmitMessage(e: any) {
-    this._db.set({
+    this._logDb.set({
       ts: Date.now(),
       userId: this.user!.id,
       username: this.user!.username,
@@ -283,6 +303,7 @@ export class ChatApp extends LitElement {
 
   private renderRoom() {
     const log = Object.values(this.logMap);
+    const participants = Object.values(this.participantsMap);
 
     return html`
       <sl-card class="room">
@@ -309,7 +330,10 @@ export class ChatApp extends LitElement {
             </sl-input>
           </sl-form>
         </div>
-        <lgc-participants class="w-80"></lgc-participants>
+        <lgc-participants
+          class="w-80"
+          .participants="${participants}"
+        ></lgc-participants>
       </sl-card>
     `;
   }
@@ -317,9 +341,9 @@ export class ChatApp extends LitElement {
   private initDb() {
     window.history.replaceState(null, '', `/room/${process.env.ROOM_ID}`);
 
-    this._db = this._gun.get(process.env.ROOM_ID).get('log');
+    this._logDb = this._gun.get(process.env.ROOM_ID).get('log');
 
-    this._db.map().on(
+    this._logDb.map().on(
       (msg: any, key: string) => {
         this.logMap = {
           ...this.logMap,
@@ -331,6 +355,27 @@ export class ChatApp extends LitElement {
             timestamp: msg.ts,
           },
         };
+      },
+      {
+        change: true,
+      }
+    );
+
+    this._usersDb.map().on(
+      (data: any, key: string) => {
+        if (data.online) {
+          this.participantsMap = {
+            ...this.participantsMap,
+            [key]: {
+              id: key,
+              username: data.username,
+            },
+          };
+        } else if (this.participantsMap[key]) {
+          const { [key]: discard, ...other } = this.participantsMap;
+
+          this.participantsMap = other;
+        }
       },
       {
         change: true,
