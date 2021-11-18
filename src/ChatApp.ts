@@ -1,99 +1,12 @@
-/* eslint-disable max-classes-per-file */
 import { LitElement, html, css } from 'lit';
-import { customElement, property, query, state } from 'lit/decorators.js';
-import { repeat } from 'lit/directives/repeat.js';
+import { property, query, state } from 'lit/decorators.js';
 
 // @ts-ignore
 import Gun from 'https://cdn.skypack.dev/gun/gun';
 // @ts-ignore
 import 'https://cdn.skypack.dev/gun/sea';
 
-type Message = {
-  id: string;
-  userId: string;
-  username: string;
-  text: string;
-  timestamp: number;
-};
-
-type Participant = {
-  id: string;
-  username: string;
-};
-
-type User = Participant & {
-  online: boolean;
-};
-
-@customElement('lgc-log')
-class Log extends LitElement {
-  @property({ type: Array }) log: Message[] = [];
-
-  static styles = [css``];
-
-  render() {
-    return html`
-      <!-- TODO move to shared -->
-      <link rel="stylesheet" href="./dist/tailwind.css" />
-
-      <ul class="list-none">
-        ${repeat(
-          this.log,
-          item => item.id,
-          item => html`<li>
-            <div class="flex pl-4 pr-4 pt-5">
-              <div class="mr-4">
-                <sl-avatar></sl-avatar>
-              </div>
-              <div>
-                <div class="mb-1">
-                  <strong class="mr-1">${item.username}</strong>
-                  <sl-relative-time
-                    class="text-xs text-gray-500"
-                    .date="${new Date(item.timestamp)}"
-                  ></sl-relative-time>
-                </div>
-                <div>${item.text}</div>
-              </div>
-            </div>
-          </li>`
-        )}
-      </ul>
-    `;
-  }
-}
-
-@customElement('lgc-participants')
-class Participants extends LitElement {
-  @property({ type: Array }) participants: Participant[] = [];
-
-  static styles = [
-    css`
-      :host {
-        background-color: rgb(var(--sl-color-neutral-200));
-      }
-
-      sl-avatar {
-        --size: 2rem;
-      }
-    `,
-  ];
-
-  render() {
-    return html`
-      <sl-menu>
-        <sl-menu-label>Online (${this.participants.length})</sl-menu-label>
-        ${this.participants.map(
-          user =>
-            html`<sl-menu-item value="${user.id}">
-              <sl-avatar slot="prefix"></sl-avatar>
-              <span class="ml-1">${user.username}</span>
-            </sl-menu-item>`
-        )}
-      </sl-menu>
-    `;
-  }
-}
+import { Message, Participant, User } from './types.js';
 
 export class ChatApp extends LitElement {
   @property({ type: String }) roomName = '#general';
@@ -418,12 +331,5 @@ export class ChatApp extends LitElement {
         change: true,
       }
     );
-  }
-}
-
-declare global {
-  interface HTMLElementTagNameMap {
-    'lgc-log': Log;
-    'lgc-participants': Participants;
   }
 }
