@@ -108,6 +108,9 @@ export class ChatApp extends LitElement {
   logMap: { [key: string]: Message } = {};
 
   @state()
+  loginError?: Error;
+
+  @state()
   participantsMap: { [key: string]: Participant } = {};
 
   @query('#sign-in-form')
@@ -207,8 +210,7 @@ export class ChatApp extends LitElement {
   }) {
     this._gunUser.auth(username, password, ({ err, soul }: any) => {
       if (err) {
-        // TODO show error
-        console.debug(err);
+        this.loginError = new Error(err);
       } else {
         const pub = soul.slice(1);
 
@@ -226,6 +228,8 @@ export class ChatApp extends LitElement {
   }
 
   private handleSubmitLogin(e: any) {
+    this.loginError = undefined;
+
     const { formData } = e.detail;
     const username = formData.get('username');
     const password = formData.get('password');
@@ -234,6 +238,8 @@ export class ChatApp extends LitElement {
   }
 
   private handleClickCreateAccount() {
+    this.loginError = undefined;
+
     const formData = this.signInForm.getFormData();
     const username = formData.get('username');
     const password = formData.get('password');
@@ -250,8 +256,7 @@ export class ChatApp extends LitElement {
 
     this._gunUser.create(username, password, ({ err, pub }: any) => {
       if (err) {
-        // TODO show error
-        console.debug(err);
+        this.loginError = new Error(err);
       } else {
         addUser(pub);
       }
@@ -289,38 +294,47 @@ export class ChatApp extends LitElement {
 
   private renderLogin() {
     return html`
-      <sl-card>
-        <sl-form id="sign-in-form" @sl-submit="${this.handleSubmitLogin}">
-          <div class="grid gap-4">
-            <sl-input
-              name="username"
-              type="text"
-              label="Username"
-              required
-            ></sl-input>
-            <sl-input
-              name="password"
-              type="password"
-              label="Password"
-              required
-              toggle-password
-            ></sl-input>
+      <div>
+        ${this.loginError
+          ? html`<sl-alert class="mb-3" type="danger" open>
+              <sl-icon slot="icon" name="exclamation-triangle"></sl-icon>
+              ${this.loginError.message}
+            </sl-alert>`
+          : ''}
 
-            <div class="flex flex-col items-center justify-center">
-              <sl-button type="primary" style="width:100%" submit pill
-                >Log in</sl-button
-              >
-              <span class="p-2">or</span>
-              <sl-button
-                @click="${this.handleClickCreateAccount}"
-                style="width:100%"
-                pill
-                >Create account</sl-button
-              >
+        <sl-card>
+          <sl-form id="sign-in-form" @sl-submit="${this.handleSubmitLogin}">
+            <div class="grid gap-4">
+              <sl-input
+                name="username"
+                type="text"
+                label="Username"
+                required
+              ></sl-input>
+              <sl-input
+                name="password"
+                type="password"
+                label="Password"
+                required
+                toggle-password
+              ></sl-input>
+
+              <div class="flex flex-col items-center justify-center">
+                <sl-button type="primary" style="width:100%" submit pill
+                  >Log in</sl-button
+                >
+                <span class="p-2">or</span>
+                <sl-button
+                  @click="${this.handleClickCreateAccount}"
+                  style="width:100%"
+                  pill
+                  >Create account</sl-button
+                >
+              </div>
             </div>
-          </div>
-        </sl-form>
-      </sl-card>
+          </sl-form>
+        </sl-card>
+      </div>
     `;
   }
 
