@@ -1,7 +1,10 @@
 /* eslint-disable max-classes-per-file */
 import { LitElement, html, css } from 'lit';
-import { customElement, property } from 'lit/decorators.js';
+import { customElement, property, query } from 'lit/decorators.js';
 import { repeat } from 'lit/directives/repeat.js';
+
+// @ts-ignore
+import Gun from 'https://cdn.skypack.dev/gun';
 
 type Message = {
   id: string;
@@ -13,15 +16,7 @@ type Message = {
 
 @customElement('lgc-log')
 class Log extends LitElement {
-  @property({ type: Array }) log: Message[] = [
-    {
-      id: '1',
-      userId: '1',
-      username: 'User 1',
-      text: 'hello',
-      timestamp: 1637193705959,
-    },
-  ];
+  @property({ type: Array }) log: Message[] = [];
 
   static styles = [css``];
 
@@ -32,10 +27,11 @@ class Log extends LitElement {
 
       <ul class="list-none">
         ${repeat(
-          this.log,
+          Array.from(this.log),
           item => item.id,
           item => html`<li>
             <div>
+              <sl-avatar></sl-avatar>
               <span>${item.username}</span>
               <sl-relative-time
                 .date="${new Date(item.timestamp)}"
@@ -89,6 +85,14 @@ class Participants extends LitElement {
 export class ChatApp extends LitElement {
   @property({ type: String }) roomName = '#general';
 
+  @property({ attribute: false })
+  logMap: { [key: string]: Message } = {};
+
+  @query('#input')
+  input!: HTMLInputElement;
+
+  _db: Gun;
+
   static styles = css`
     :host {
       min-width: 100vw;
@@ -117,7 +121,46 @@ export class ChatApp extends LitElement {
     }
   `;
 
+  firstUpdated() {
+    this._db = Gun(['https://gun-manhattan.herokuapp.com/gun'])
+      .get(process.env.ROOM_ID)
+      .get('log');
+
+    this._db.map().on(
+      (msg: any, key: string) => {
+        console.log('got message:', key);
+
+        this.logMap = {
+          ...this.logMap,
+          [key]: {
+            id: key,
+            userId: msg.userId,
+            username: msg.userId, // TODO
+            text: msg.text,
+            timestamp: msg.ts,
+          },
+        };
+      },
+      {
+        change: true,
+      }
+    );
+    // TODO off
+    // log.off()
+  }
+
+  send() {
+    this._db.set({
+      ts: Date.now(),
+      userId: '1',
+      text: this.input.value,
+    });
+  }
+
   render() {
+    const log = Object.values(this.logMap);
+    console.log(this.logMap);
+
     return html`
       <!-- TODO move to shared -->
       <link rel="stylesheet" href="./dist/tailwind.css" />
@@ -125,11 +168,12 @@ export class ChatApp extends LitElement {
       <sl-card class="room">
         <div class="p-3" slot="header">${this.roomName}</div>
         <div class="flex-auto flex flex-col">
-          <lgc-log class="flex-1"></lgc-log>
+          <lgc-log class="flex-1 overflow-auto" .log="${log}"></lgc-log>
           <div class="p-3">
-            <sl-input placeholder="Message ${this.roomName}" pill>
+            <sl-input id="input" placeholder="Message ${this.roomName}" pill>
               <sl-icon name="chat" slot="prefix"></sl-icon>
             </sl-input>
+            <button @click=${this.send}>Add</button>
           </div>
         </div>
         <lgc-participants class="w-80"></lgc-participants>

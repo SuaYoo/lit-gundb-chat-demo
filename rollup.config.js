@@ -7,6 +7,7 @@ import { generateSW } from 'rollup-plugin-workbox';
 import copy from 'rollup-plugin-copy';
 import replace from '@rollup/plugin-replace';
 import path from 'path';
+import { nanoid } from 'nanoid';
 
 const shoelaceAssetDest = 'dist/shoelace';
 
@@ -45,6 +46,7 @@ export default {
     replace({
       'process.env.NODE_ENV': JSON.stringify('production'),
       'process.env.SHOELACE_ASSET_DEST': JSON.stringify(shoelaceAssetDest),
+      'process.env.ROOM_ID': JSON.stringify(nanoid()),
     }),
     /** Resolve bare module imports */
     nodeResolve(),

@@ -1,6 +1,7 @@
 // import { hmrPlugin, presets } from '@open-wc/dev-server-hmr';
 import { fromRollup } from '@web/dev-server-rollup';
 import rollupReplace from '@rollup/plugin-replace';
+import { nanoid } from 'nanoid';
 
 const replace = fromRollup(rollupReplace);
 
@@ -32,6 +33,7 @@ export default /** @type {import('@web/dev-server').DevServerConfig} */ ({
     replace({
       'process.env.NODE_ENV': JSON.stringify('development'),
       'process.env.SHOELACE_ASSET_DEST': JSON.stringify(shoelaceAssetDest),
+      'process.env.ROOM_ID': JSON.stringify(nanoid()),
     }),
   ],
 
